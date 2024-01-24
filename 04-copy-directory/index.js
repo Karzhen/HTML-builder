@@ -5,7 +5,6 @@ const filesCopyPath = path.join(__dirname, 'files-copy');
 
 async function copyFiles(sourcePath, destinationPath) {
   try {
-    // Обработка обнуления папки
     try {
       await fs.promises.access(destinationPath);
       await fs.promises.rm(destinationPath, { force: true, recursive: true });
@@ -14,7 +13,6 @@ async function copyFiles(sourcePath, destinationPath) {
       /* empty */
     }
     await fs.promises.mkdir(destinationPath, { recursive: true });
-    console.log(`Directory ${destinationPath} created successfully!`);
 
     const files = await fs.promises.readdir(sourcePath);
     const filesCopy = await fs.promises.readdir(destinationPath);
@@ -31,27 +29,18 @@ async function copyFiles(sourcePath, destinationPath) {
       const sourceFilePath = path.join(sourcePath, file);
       const destinationFilePath = path.join(destinationPath, file);
 
-      // const sourceStat = await fs.promises.stat(sourceFilePath);
-      // if (sourceStat.isDirectory()) {
-      //   await copyFiles(sourceFilePath, destinationFilePath);
-      // } else {
-      //   const destinationStat = await fs.promises
-      //     .stat(destinationFilePath)
-      //     .catch(() => null);
-      //
-      //   if (!destinationStat || sourceStat.mtimeMs > destinationStat.mtimeMs) {
-      //     await fs.promises.copyFile(sourceFilePath, destinationFilePath);
-      //     console.log(`File ${file} has been updated in files-copy.`);
-      //   }
-      // }
       const sourceStat = await fs.promises.stat(sourceFilePath);
-      const destinationStat = await fs.promises
-        .stat(destinationFilePath)
-        .catch(() => null);
+      if (sourceStat.isDirectory()) {
+        await copyFiles(sourceFilePath, destinationFilePath);
+      } else {
+        const destinationStat = await fs.promises
+          .stat(destinationFilePath)
+          .catch(() => null);
 
-      if (!destinationStat || sourceStat.mtimeMs > destinationStat.mtimeMs) {
-        await fs.promises.copyFile(sourceFilePath, destinationFilePath);
-        console.log(`File ${file} has been updated in files-copy.`);
+        if (!destinationStat || sourceStat.mtimeMs > destinationStat.mtimeMs) {
+          await fs.promises.copyFile(sourceFilePath, destinationFilePath);
+          console.log(`File ${file} has been updated in files-copy.`);
+        }
       }
     }
   } catch (error) {
